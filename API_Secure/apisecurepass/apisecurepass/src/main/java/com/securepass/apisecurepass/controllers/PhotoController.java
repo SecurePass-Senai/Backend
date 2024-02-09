@@ -6,21 +6,24 @@ import com.securepass.apisecurepass.repositories.PhotoRepository;
 
 import com.securepass.apisecurepass.services.FileUploadService;
 import jakarta.validation.Valid;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 
 
+import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 
 @RestController
@@ -29,57 +32,54 @@ public class PhotoController {
     @Autowired
     PhotoRepository photoRepository;
 
-
+    // Define o endpoint que aceita requisições POST com multipart form data
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<Object> uploadPhoto(@ModelAttribute @Valid PhotoDto photoDto) {
+    public ResponseEntity<Object> uploadPhoto(@ModelAttribute @Valid PhotoDto photoDto) throws IOException {
 
-        String imgUrl = "";
-
+        // Inicializa o cliente HTTP para realizar a requisição externa
+        CloseableHttpClient httpClient = HttpClients.createDefault();
         try {
+            // Define o endpoint para a requisição POST
+            HttpPost httpPost = new HttpPost("http://74.235.106.124:5000/login");
 
+            // Extrai o arquivo do DTO
             MultipartFile file = photoDto.image();
 
-            String extensaoArquivo = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf('.') + 1);
-
-            String nomeArquivo = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyyyyHHmmss")) + "." + extensaoArquivo;
-
-            var uploadBlob = Blob.UploadFileToBlob(file, nomeArquivo);
-
-
-            // Construir o corpo da solicitação para o serviço Python
-            String requestBody = nomeArquivo;
-
-            // Criação de um cliente HTTP para enviar a solicitação para o serviço Python
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://74.235.106.124:5000/login")) // URL do serviço Python
-                    .header("Content-Type", "multipart/form-data")
-
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+            // Constrói o corpo da requisição com o arquivo
+            HttpEntity entity = MultipartEntityBuilder.create()
+                    .addBinaryBody("file", file.getInputStream(), ContentType.APPLICATION_OCTET_STREAM, file.getOriginalFilename())
                     .build();
 
-            // Envio da solicitação HTTP e recebimento da resposta
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            // Define o corpo da requisição na requisição POST
+            httpPost.setEntity(entity);
 
-            System.out.println(response);
-            String errorMessage = response.toString();
-            String message = nomeArquivo;
-            System.out.println("Erro da API Python: " + errorMessage);
-            System.out.println("Erro Aquiii " + message);
+            // Executa a requisição e captura a resposta
+            CloseableHttpResponse response = httpClient.execute(httpPost);
+            try {
+                // Imprime o status da resposta do servidor
+                System.out.println("Resposta do servidor: " + response.getStatusLine());
 
-            // Verificação do código de status da resposta e retorno apropriado
-            if (response.statusCode() == HttpStatus.OK.value()) {
-                return ResponseEntity.status(HttpStatus.OK).body(response.body());
-            } else {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao processar a solicitação.");
+                // Captura o corpo da resposta
+                HttpEntity responseEntity = response.getEntity();
+                if (responseEntity != null) {
+                    // Converte o corpo da resposta para string
+                    String responseBody = EntityUtils.toString(responseEntity);
+                    System.out.println("Corpo da resposta: " + responseBody);
+
+                    // Retorna a resposta como JSON com o status HTTP  200 OK
+                    return ResponseEntity.ok().body(responseBody);
+                }
+            } finally {
+                // Fecha a resposta para liberar recursos
+                response.close();
             }
-
-
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+        } finally {
+            // Fecha o cliente HTTP para liberar recursos
+            httpClient.close();
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(imgUrl);
+        // Caso nenhum corpo de resposta seja capturado, retorna uma resposta vazia com status HTTP  200 OK
+        return ResponseEntity.ok().build();
     }
 
 
