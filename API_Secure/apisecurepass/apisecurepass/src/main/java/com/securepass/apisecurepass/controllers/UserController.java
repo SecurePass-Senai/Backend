@@ -1,8 +1,7 @@
 package com.securepass.apisecurepass.controllers;
 
-import com.securepass.apisecurepass.config.Blob;
+import com.securepass.apisecurepass.azure.Blob;
 import com.securepass.apisecurepass.dtos.UserDto;
-import com.securepass.apisecurepass.models.TypeUsersModel;
 import com.securepass.apisecurepass.models.UserModel;
 import com.securepass.apisecurepass.repositories.UserRepository;
 import com.securepass.apisecurepass.services.FileUploadService;
@@ -13,8 +12,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -64,12 +66,20 @@ public class UserController {
         String imgUrl;
 
         try {
-            imgUrl = FileUploadService.FazerUpload(userDto.image());
+            MultipartFile file = userDto.image();
 
-            var upload = Blob.UploadFileToBlob(imgUrl);
+            String extensaoArquivo = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf('.') + 1);
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            String nomeArquivo = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyyyyHHmmss")) + "." + extensaoArquivo;
+
+            var uploadBlob = Blob.UploadFileToBlob( file, nomeArquivo );
+
+            System.out.println(uploadBlob);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao processar o upload do arquivo: " + e.getMessage());
+
         }
 
         // Salva o novo usuário no banco de dados
@@ -90,15 +100,21 @@ public class UserController {
         String imgUrl;
 
         try {
-            imgUrl = FileUploadService.FazerUpload(userDto.image());
+            MultipartFile file = userDto.image();
 
-            var upload = Blob.UploadFileToBlob(imgUrl);
+            String extensaoArquivo = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf('.') + 1);
 
-        } catch (IOException e) {
+            String nomeArquivo = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyyyyHHmmss")) + "." + extensaoArquivo;
 
-            throw new RuntimeException(e);
+            var uploadBlob = Blob.UploadFileToBlob( file, nomeArquivo );
+
+            return ResponseEntity.status(HttpStatus.OK).body( uploadBlob);
+
+        }  catch (Exception e) {
+            // Tratar a exceção aqui
+            e.printStackTrace(); // ou qualquer outro tratamento desejado
+
         }
-        user.setFace(imgUrl);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(userRepository.save(user));
     }
