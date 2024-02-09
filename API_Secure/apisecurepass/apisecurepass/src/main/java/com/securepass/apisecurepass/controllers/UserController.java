@@ -6,6 +6,7 @@ import com.securepass.apisecurepass.models.UserModel;
 import com.securepass.apisecurepass.repositories.UserRepository;
 import com.securepass.apisecurepass.services.FileUploadService;
 import jakarta.validation.Valid;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -63,28 +64,38 @@ public class UserController {
         UserModel user = new UserModel();
         BeanUtils.copyProperties(userDto, user);
 
-        String imgUrl;
+        // Fornece um valor padrão temporário para o campo 'face'
+        user.setFace("temporary_placeholder");
+
+        // Salva o novo usuário no banco de dados para obter o ID gerado
+        UserModel savedUser = userRepository.save(user);
 
         try {
             MultipartFile file = userDto.image();
 
-            String extensaoArquivo = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf('.') + 1);
+            // Gera um UUID aleatório
+            UUID uuid = UUID.randomUUID();
+            // Cria um nome de arquivo único usando o UUID e a extensão do arquivo original
+            String fileName = uuid.toString() + "." + FilenameUtils.getExtension(file.getOriginalFilename());
 
-            String nomeArquivo = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyyyyHHmmss")) + "." + extensaoArquivo;
-
-            var uploadBlob = Blob.UploadFileToBlob( file, nomeArquivo );
+            // Faz o upload do arquivo para o blob storage
+            var uploadBlob = Blob.UploadFileToBlob(file, fileName);
 
             System.out.println(uploadBlob);
+
+            // Atualiza o campo 'face' com o nome do arquivo após o upload bem-sucedido
+            savedUser.setFace(fileName);
+            userRepository.save(savedUser);
 
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao processar o upload do arquivo: " + e.getMessage());
-
         }
 
-        // Salva o novo usuário no banco de dados
-        return ResponseEntity.status(HttpStatus.CREATED).body(userRepository.save(user));
+        // Retorna a resposta após o upload bem-sucedido
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
     }
+
 
     @PutMapping(value = "/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Object> editarUsuario(@PathVariable(value = "id") UUID id, @ModelAttribute @Valid UserDto userDto) {

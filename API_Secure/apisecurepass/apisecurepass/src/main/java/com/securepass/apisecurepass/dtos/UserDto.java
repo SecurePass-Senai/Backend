@@ -25,7 +25,7 @@ public record UserDto(
         int sessao, // Número de sessão
         MultipartFile image, // Arquivo de imagem para o rosto do usuário
         UUID id_tipousuario ,// Tipo de usuário (representado por um UUID)
-        @Nullable MultipartFile face
+        MultipartFile face
 
 ) {
 }
