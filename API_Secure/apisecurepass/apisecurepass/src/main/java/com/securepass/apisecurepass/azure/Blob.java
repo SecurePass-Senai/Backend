@@ -14,7 +14,7 @@ import java.io.FileInputStream;
 @Service
 public class Blob {
 
-    public static final String storageConnectionString = "DefaultEndpointsProtocol=https;AccountName=codereconhecimento;AccountKey=taIOzH1zxOsWN8HfwOLZqnCl1EO9x53f0txAc6jhBDlLB2/tc2Rr23n9pscd+IuF14YLm+gZ/o+i+ASt0e1C7w==;EndpointSuffix=core.windows.net";
+    public static final String storageConnectionString = "DefaultEndpointsProtocol=https;AccountName=securepass;AccountKey=xRFzevfEIqCJ30rilIwKqI6SeZvugSOSYP8uij9RXUu6c9tqeCx3yxpWCZ94/PD0esQgieuBKSqb+ASt/k2tJQ==;EndpointSuffix=core.windows.net";
 
 
     // Criando função para enviar arquivo
@@ -27,7 +27,7 @@ public class Blob {
             CloudBlobClient blobClient = storageAccount.createCloudBlobClient();
 
             // Reconhecendo o container criado
-            CloudBlobContainer container = blobClient.getContainerReference("containerblobstorage");
+            CloudBlobContainer container = blobClient.getContainerReference("securepasscontainer");
 
             // Criando uma referencia do novo arquivo que será gerado
             CloudBlockBlob blob = container.getBlockBlobReference(nomeArquivo);

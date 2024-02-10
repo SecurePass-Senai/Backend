@@ -1,5 +1,7 @@
 package com.securepass.apisecurepass.models;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,7 +33,7 @@ public class UserModel {
     private String face; // Representação da face do usuário (provavelmente um caminho ou referência para a imagem)
 
     // Relacionamento muitos para um (many-to-one) com o modelo de tipo de usuário
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_tipousuario" , referencedColumnName = "id")
     private TypeUsersModel typeUser; // Tipo de usuário associado a este usuário
 

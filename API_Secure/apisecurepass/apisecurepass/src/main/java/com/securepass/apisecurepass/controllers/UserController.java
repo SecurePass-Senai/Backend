@@ -51,7 +51,6 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(searchUser.get());
     }
 
-    // Endpoint para cadastrar um novo usuário
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Object> userRegister(@ModelAttribute @Valid UserDto userDto) {
         // Verifica se o email já está cadastrado
@@ -66,26 +65,19 @@ public class UserController {
 
         // Fornece um valor padrão temporário para o campo 'face'
         user.setFace("temporary_placeholder");
-
         // Salva o novo usuário no banco de dados para obter o ID gerado
         UserModel savedUser = userRepository.save(user);
 
         try {
             MultipartFile file = userDto.image();
 
-            // Gera um UUID aleatório
-            UUID uuid = UUID.randomUUID();
-            // Cria um nome de arquivo único usando o UUID e a extensão do arquivo original
-            String fileName = uuid.toString() + "." + FilenameUtils.getExtension(file.getOriginalFilename());
+            // Usa o UUID do usuário como o nome do arquivo
+            String fileName = savedUser.getId().toString() + "." + FilenameUtils.getExtension(file.getOriginalFilename());
 
             // Faz o upload do arquivo para o blob storage
             var uploadBlob = Blob.UploadFileToBlob(file, fileName);
 
             System.out.println(uploadBlob);
-
-            // Atualiza o campo 'face' com o nome do arquivo após o upload bem-sucedido
-            savedUser.setFace(fileName);
-            userRepository.save(savedUser);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -117,11 +109,11 @@ public class UserController {
 
             String nomeArquivo = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyyyyHHmmss")) + "." + extensaoArquivo;
 
-            var uploadBlob = Blob.UploadFileToBlob( file, nomeArquivo );
+            var uploadBlob = Blob.UploadFileToBlob(file, nomeArquivo);
 
-            return ResponseEntity.status(HttpStatus.OK).body( uploadBlob);
+            return ResponseEntity.status(HttpStatus.OK).body(uploadBlob);
 
-        }  catch (Exception e) {
+        } catch (Exception e) {
             // Tratar a exceção aqui
             e.printStackTrace(); // ou qualquer outro tratamento desejado
 
