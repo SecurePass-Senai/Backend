@@ -102,7 +102,7 @@ public class PhotoController {
                         if (user.isPresent()){
                             UserModel userLog= user.get();
                             System.out.println(userLog.getId());
-                            
+
                             return ResponseEntity.ok().body(userLog);
                         }
                         // Se o usuário for encontrado, retorne suas informações
