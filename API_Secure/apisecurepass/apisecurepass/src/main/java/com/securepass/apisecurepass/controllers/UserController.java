@@ -3,6 +3,7 @@ package com.securepass.apisecurepass.controllers;
 import com.securepass.apisecurepass.azure.Blob;
 import com.securepass.apisecurepass.dtos.UserDto;
 import com.securepass.apisecurepass.models.UserModel;
+import com.securepass.apisecurepass.repositories.TypeUsersRepository;
 import com.securepass.apisecurepass.repositories.UserRepository;
 import com.securepass.apisecurepass.services.FileUploadService;
 import jakarta.validation.Valid;
@@ -24,13 +25,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 @RequestMapping(value = "/users", produces = {"application/json"})
 public class UserController {
 
     // Injeção da dependência do repositório do usuário
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    TypeUsersRepository typeUserRepository;
 
     @Autowired
     FileUploadService fileUploadService;
@@ -63,6 +67,15 @@ public class UserController {
         // Converte o DTO do usuário para a entidade UserModel
         UserModel user = new UserModel();
         BeanUtils.copyProperties(userDto, user);
+
+        var userWithId = typeUserRepository.findById(userDto.typeUser());
+
+        if (userWithId.isPresent()){
+            user.setTypeUser(userWithId.get());
+        }
+        else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nao encontrado ");
+        }
 
         // Fornece um valor padrão temporário para o campo 'face'
         user.setFace("temporary_placeholder");

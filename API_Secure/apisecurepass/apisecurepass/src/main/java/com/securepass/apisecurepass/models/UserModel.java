@@ -35,7 +35,7 @@ public class UserModel {
     private String face; // Representação da face do usuário (provavelmente um caminho ou referência para a imagem)
 
     // Relacionamento muitos para um (many-to-one) com o modelo de tipo de usuário
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne //(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_tipousuario" , referencedColumnName = "id")
     private TypeUsersModel typeUser; // Tipo de usuário associado a este usuário
 

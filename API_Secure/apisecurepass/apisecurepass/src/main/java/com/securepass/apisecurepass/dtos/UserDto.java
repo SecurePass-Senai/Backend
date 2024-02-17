@@ -27,7 +27,7 @@ public record UserDto(
         String funcao, // Função ou cargo do usuário
         int sessao, // Número de sessão
         MultipartFile image, // Arquivo de imagem para o rosto do usuário
-        TypeUsersModel typeUser ,// Tipo de usuário (representado por um UUID)
+        UUID typeUser ,// Tipo de usuário (representado por um UUID)
         MultipartFile face
 
 ) {
